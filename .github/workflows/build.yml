@@ -82,3 +82,36 @@ jobs:
         with:
           name: openvpn-docker-arm64
           path: /tmp/openvpn-arm64.tar
+
+      - name: Upload Docker images to release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            /tmp/openvpn-amd64.tar
+            /tmp/openvpn-arm64.tar
+            src/openvpn-web/dist/*
+          name: Release ${{ github.ref_name }}
+          body: |
+            ## Docker 镜像使用方法
+            
+            **AMD64 架构设备：**
+            ```bash
+            # 下载 openvpn-amd64.tar
+            docker load < openvpn-amd64.tar
+            docker run -d --name openvpn openvpn:${{ github.ref_name }}
+            ```
+            
+            **ARM64 架构设备：**
+            ```bash
+            # 下载 openvpn-arm64.tar
+            docker load < openvpn-arm64.tar
+            docker run -d --name openvpn openvpn:${{ github.ref_name }}
+            ```
+            
+            ## 构建信息
+            - 版本: ${{ github.ref_name }}
+            - 构建时间: ${{ github.run_id }}
+            - 支持架构: AMD64, ARM64
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
