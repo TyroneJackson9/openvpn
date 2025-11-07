@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - '*'
+  workflow_dispatch:
 
 jobs:
   goreleaser:
@@ -43,7 +44,7 @@ jobs:
       - name: Set Version
         run: echo VERSION=`git describe --tags --always` >> $GITHUB_ENV
 
-      - name: Build Docker image
+      - name: Build Docker image (OCI format)
         uses: docker/build-push-action@v3
         with:
           context: ./build
@@ -57,10 +58,11 @@ jobs:
           tags: |
             openvpn:latest
             openvpn:${{ env.VERSION }}
-          outputs: type=docker,dest=/tmp/openvpn-image.tar
+          outputs: type=oci,dest=/tmp/openvpn-image.tar
 
-      - name: Upload Docker image artifact
+      - name: Upload Docker image artifact (OCI format)
         uses: actions/upload-artifact@v4
         with:
-          name: openvpn-docker-image
+          name: openvpn-docker-image-oci
           path: /tmp/openvpn-image.tar
+          compression-level: 0
