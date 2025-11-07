@@ -26,12 +26,13 @@ jobs:
           version: '~> v2'
           args: release --clean --skip=validate
         env:
-          GITHUB_TOKEN: ${{ secrets.ACTION_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: docker/login-action@v2
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          name: openvpn-web-binaries
+          path: src/openvpn-web/dist/*
 
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v2
@@ -42,17 +43,24 @@ jobs:
       - name: Set Version
         run: echo VERSION=`git describe --tags --always` >> $GITHUB_ENV
 
-      - name: Build and push image
+      - name: Build Docker image
         uses: docker/build-push-action@v3
         with:
           context: ./build
           file: ./build/Dockerfile
-          push: true
+          push: false
           platforms: |
             linux/amd64
             linux/arm64
           build-args: |
             VERSION=${{ env.VERSION }}
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/openvpn:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/openvpn:${{ env.VERSION }}
+            openvpn:latest
+            openvpn:${{ env.VERSION }}
+          outputs: type=docker,dest=/tmp/openvpn-image.tar
+
+      - name: Upload Docker image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openvpn-docker-image
+          path: /tmp/openvpn-image.tar

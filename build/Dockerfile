@@ -1,6 +1,9 @@
 FROM alpine:3.22.2
 
 RUN apk add --no-cache openssl openvpn iptables iptables-legacy bash supervisor curl sqlite grep mailcap coreutils jq
+RUN ln -sf /usr/sbin/iptables-legacy /usr/sbin/iptables && \
+    ln -sf /usr/sbin/ip6tables-legacy /usr/sbin/ip6tables
+RUN apk del nftables || true
 #RUN mkdir /lib64 && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2
 
 COPY docker-entrypoint.sh /usr/bin
