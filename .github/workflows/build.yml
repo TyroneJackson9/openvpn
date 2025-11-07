@@ -4,7 +4,6 @@ on:
   push:
     tags:
       - '*'
-  workflow_dispatch:
 
 jobs:
   goreleaser:
@@ -44,25 +43,42 @@ jobs:
       - name: Set Version
         run: echo VERSION=`git describe --tags --always` >> $GITHUB_ENV
 
-      - name: Build Docker image (OCI format)
+      - name: Build Docker image (AMD64)
         uses: docker/build-push-action@v3
         with:
           context: ./build
           file: ./build/Dockerfile
           push: false
-          platforms: |
-            linux/amd64
-            linux/arm64
+          platforms: linux/amd64
           build-args: |
             VERSION=${{ env.VERSION }}
           tags: |
             openvpn:latest
             openvpn:${{ env.VERSION }}
-          outputs: type=oci,dest=/tmp/openvpn-image.tar
+          outputs: type=docker,dest=/tmp/openvpn-amd64.tar
 
-      - name: Upload Docker image artifact (OCI format)
+      - name: Build Docker image (ARM64)
+        uses: docker/build-push-action@v3
+        with:
+          context: ./build
+          file: ./build/Dockerfile
+          push: false
+          platforms: linux/arm64
+          build-args: |
+            VERSION=${{ env.VERSION }}
+          tags: |
+            openvpn:latest
+            openvpn:${{ env.VERSION }}
+          outputs: type=docker,dest=/tmp/openvpn-arm64.tar
+
+      - name: Upload AMD64 Docker image
         uses: actions/upload-artifact@v4
         with:
-          name: openvpn-docker-image-oci
-          path: /tmp/openvpn-image.tar
-          compression-level: 0
+          name: openvpn-docker-amd64
+          path: /tmp/openvpn-amd64.tar
+
+      - name: Upload ARM64 Docker image
+        uses: actions/upload-artifact@v4
+        with:
+          name: openvpn-docker-arm64
+          path: /tmp/openvpn-arm64.tar
